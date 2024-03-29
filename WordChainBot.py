@@ -4,6 +4,8 @@ from discord.ext import tasks
 import datetime
 import os
 import logging
+from typing import Optional
+from emoji import is_emoji
 from utils.db_connection import DatabaseConnection
 from utils.check_spelling import check_spelling
 from cogs.owneronly import PrivateCogs
@@ -23,8 +25,8 @@ class WordChainBot(commands.Bot):
     async def setup_hook(self):
         self.languages = await self.get_languages()
         self.logger.debug("Got available languages")
-        self.__developer_id = os.environ["DEVELOPER_ID"]
-        self.__test_server_id = os.environ["TEST_SERVER_ID"]
+        self.__developer_id = int(os.environ["DEVELOPER_ID"])
+        self.__test_server_id = int(os.environ["TEST_SERVER_ID"])
         await self.add_cog(PrivateCogs(self))
         await self.add_cog(WordChainCog(self))
         self.logger.debug("Added cogs. Started sync")
@@ -48,7 +50,7 @@ class WordChainBot(commands.Bot):
     async def on_ready(self):
         print(f"The bot is on {len(self.guilds)} discord server")
         for guild in self.guilds:
-            if not await self.get_guild(guild.id):
+            if not await self.get_guild_by_id(guild.id):
                 await self.add_guild(guild.id)
             print(guild)
         await self.change_presence(activity=discord.Game("Word Chain", start=datetime.datetime.utcnow()))
@@ -63,7 +65,7 @@ class WordChainBot(commands.Bot):
                 return
             elif self.user.mentioned_in(message) and message.author.id == self.__developer_id:
                 self.logger.debug("Copying commands to test server started")
-                self.tree.copy_global_to(discord.Object(id=self.__test_server_id))
+                self.tree.copy_global_to(guild=discord.Object(self.__test_server_id))
                 self.logger.debug("Copying commands to test server finished")
                 self.logger.debug("Syncing the commands started")
                 await self.tree.sync()
@@ -75,11 +77,23 @@ class WordChainBot(commands.Bot):
             elif len(message.mentions) > 0 or len(message.role_mentions) > 0 or message.mention_everyone:
                 return
 
-            passed, streak = await self.check_input(message.content, message.guild.id, message.channel.id, message.author.id)
+            passed, streak = await self.check_input(message.content, message.guild.id, message.channel.id,
+                                                    message.author.id)
+
+            pass_react, wrong_react = await self.get_reactions(message.guild.id, message.channel.id)
+
             if passed:
-                await message.add_reaction("✅")
+                if pass_react is None:
+                    pass_react = "✅"
+                elif not is_emoji(pass_react):
+                    pass_react = self.get_emoji(int(pass_react))
+                await message.add_reaction(pass_react)
             else:
-                await message.add_reaction("❌")
+                if wrong_react is None:
+                    wrong_react = "❌"
+                elif not is_emoji(wrong_react):
+                    wrong_react = self.get_emoji(int(wrong_react))
+                await message.add_reaction(wrong_react)
                 await message.channel.send(
                     f"The game has ended after {streak} different word(s) thanks to {message.author.mention}! Congratulate to him/her!\nSend a new word to start a new game!")
 
@@ -99,12 +113,15 @@ class WordChainBot(commands.Bot):
         await self.__database.close_connection()
         return languages
 
-    async def get_guild(self, guild_id: int):
-        return await self.__database.get_guild(guild_id)
+    async def get_guild_by_id(self, guild_id: int):
+        return await self.__database.get_guild_by_id(guild_id)
 
     async def get_channels(self, guild_id: int):
         channels = await self.__database.get_guild_channels(guild_id)
         return [channel[0] for channel in channels]
+
+    async def get_reactions(self, guild_id: int, channel_id: int):
+        return await self.__database.get_props(guild_id, channel_id, "pass_reaction", "wrong_reaction")
 
     async def add_channel(self, guild_id: int, channel_id: int, lang: str):
         await self.__database.add_channel(guild_id, channel_id, lang)
@@ -112,14 +129,23 @@ class WordChainBot(commands.Bot):
     async def add_guild(self, guild_id: int):
         await self.__database.add_guild(guild_id)
 
+    async def add_reaction(self, guild_id: int, channel_id: int, pass_reaction: Optional[str],
+                           wrong_reaction: Optional[str]):
+        await self.__database.add_reactions(guild_id, channel_id, pass_reaction, wrong_reaction)
+
     async def remove_channel(self, guild_id: int, channel_id: int):
         await self.__database.remove_channel(guild_id, channel_id)
 
     async def remove_guild(self, guild_id: int):
         await self.__database.remove_guild(guild_id)
 
+    async def remove_reaction(self, guild_id: int, channel_id: int, pass_reaction: bool, wrong_reaction: bool):
+        await self.__database.remove_reactions(guild_id, channel_id, pass_reaction, wrong_reaction)
+
     async def check_input(self, message: str, guild_id: int, channel_id: int, author_id: int):
-        lang, last_sender_id, last_word, streak_count = await self.__database.get_props(guild_id, channel_id, "guild_lang", "last_sender_id", "last_word", "streak_count")
+        lang, last_sender_id, last_word, streak_count = await self.__database.get_props(guild_id, channel_id,
+                                                                                        "guild_lang", "last_sender_id",
+                                                                                        "last_word", "streak_count")
         special_chars = await self.__database.get_special_chars(lang)
         is_matching = False
         if len(message.split(" ")) == 1:

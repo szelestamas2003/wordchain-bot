@@ -2,3 +2,4 @@
 python-dotenv~=1.0.1
 discord.py~=2.3.2
 mysql-connector-python~=8.3.0
+emoji~=2.11.0
