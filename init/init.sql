@@ -32,6 +32,8 @@ create table guilds_prop
     last_sender_id   bigint unsigned             null,
     last_word        varchar(1000)               null,
     streak_count     bigint unsigned default '0' not null,
+    pass_reaction    varchar(1000)               null,
+    wrong_reaction   varchar(1000)               null,
     constraint guilds_prop_guilds_guild_id_fk
         foreign key (guilds_id) references guilds (guild_id)
             on update cascade on delete cascade
