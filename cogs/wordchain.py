@@ -44,11 +44,17 @@ class WordChainCog(commands.Cog, name="WordChain"):
 
     @app_commands.command(name="end-game", description="End the word chain game in this text channel.")
     @app_commands.checks.has_permissions(manage_channels=True)
-    async def end_game(self, interaction: discord.Interaction):
-        if interaction.channel_id not in (await self.bot.get_channels(interaction.guild_id)):
+    async def end_game(self, interaction: discord.Interaction, channel: Optional[discord.TextChannel] = None):
+        if channel is not None and channel not in (await self.bot.get_channels(interaction.guild_id)):
+            await interaction.response.send_message("The specified channel doesn't run a word chain game.")
+        elif channel is None and interaction.channel_id not in (await self.bot.get_channels(interaction.guild_id)):
             await interaction.response.send_message("No game is running in this channel.")
         else:
-            await self.bot.remove_channel(interaction.guild_id, interaction.channel_id)
+            if channel is not None:
+                channel = channel.id
+            else:
+                channel = interaction.channel_id
+            await self.bot.remove_channel(interaction.guild_id, channel)
             await interaction.response.send_message("Game ended.")
 
     @app_commands.command(name="change-reaction", description="Changes one or both reaction emote to a custom one.")
