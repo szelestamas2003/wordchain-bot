@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  db:
+    container_name: mysql_db
+    image: mysql:latest
+    restart: always
+    env_file: ./db_env/.env
+    ports:
+      - "3307:3306"
+    volumes:
+      - type: bind
+        source: ./init/
+        target: /docker-entrypoint-initdb.d/
+      - db-data:/var/lib/mysql
+
+  wordchainbot:
+    container_name: wordchainbot
+    env_file: ./.env
+    links:
+      - "db"
+    image: wordchainbot
+    ports:
+      - "5001:5000"
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    restart: on-failure
+    
+volumes:
+  db-data:
