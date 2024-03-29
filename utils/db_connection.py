@@ -11,8 +11,11 @@ class DatabaseConnection:
         self.__connection: mysql.connector.aio.connection.MySQLConnection = None
 
     async def connect(self):
+        host = os.getenv('MYSQL_HOST')
+        if host is None:
+            host = 'localhost'
         try:
-            self.__connection = await connect(host='localhost', user=os.environ['MYSQL_USER'],
+            self.__connection = await connect(host=host, user=os.environ['MYSQL_USER'],
                                               password=os.environ.get('MYSQL_PASSWORD'),
                                               database=os.environ['MYSQL_DB'])
             print(f"Connection id: {self.__connection.connection_id}")

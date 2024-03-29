@@ -18,7 +18,7 @@ services:
     container_name: wordchainbot
     env_file: ./.env
     links:
-      - "db"
+      - "db:mysql_db"
     image: wordchainbot
     ports:
       - "5001:5000"
@@ -26,6 +26,8 @@ services:
       context: .
       dockerfile: ./Dockerfile
     restart: on-failure
+    environment:
+      - MYSQL_HOST=mysql_db
     
 volumes:
   db-data:

@@ -1,8 +1,8 @@
 create user user_name
     identified by 'user_password';
 
-grant delete, insert, select, update on wordchainbot.* to bot_use;
-
+grant delete, insert, select, update on wordchainbot.* to user_name;
+USE wordchainbot;
 create table guilds
 (
     guild_id bigint unsigned not null
@@ -20,8 +20,7 @@ create table lang_chars
 (
     lang          varchar(10) not null,
     special_chars varchar(10) not null,
-    constraint lang_chars_languages_lang_fk
-        foreign key (lang) references languages (lang)
+    foreign key (lang) references languages (lang)
 );
 
 create table guilds_prop
@@ -34,9 +33,8 @@ create table guilds_prop
     streak_count     bigint unsigned default '0' not null,
     pass_reaction    varchar(1000)               null,
     wrong_reaction   varchar(1000)               null,
-    constraint guilds_prop_guilds_guild_id_fk
-        foreign key (guilds_id) references guilds (guild_id)
-            on update cascade on delete cascade
+    foreign key (guilds_id) references guilds (guild_id)
+        on update cascade on delete cascade
 );
 
 create table guild_words
@@ -44,10 +42,9 @@ create table guild_words
     guild_id         bigint unsigned not null,
     guild_channel_id bigint unsigned null,
     word             varchar(1000)   null,
-    constraint guild_words_guilds_prop_guilds_id_fk
-        foreign key (guild_id) references guilds_prop (guilds_id)
-            on update cascade on delete cascade
+    foreign key (guild_id) references guilds_prop (guilds_id)
+        on update cascade on delete cascade
 );
 
-INSERT INTO wordchainbot.lang_chars VALUES ('hu_HU', 'cs'), VALUES ('hu_HU', 'dz'), VALUES ('hu_HU', 'dzs'), VALUES ('hu_HU', 'gy'), VALUES ('hu_HU', 'ly'), VALUES ('hu_HU', 'ny'), VALUES ('hu_HU', 'sz'), VALUES ('hu_HU', 'ty'), VALUES ('hu_HU', 'zs');
-INSERT INTO wordchainbot.languages VALUES ('hu_HU', 'Magyar'), ('en_US', 'English (US)'), ('en_GB', 'English (GB)')
+INSERT INTO languages VALUES ('hu_HU', 'Magyar'), ('en_US', 'English (US)'), ('en_GB', 'English (GB)');
+INSERT INTO lang_chars VALUES ('hu_HU', 'cs'), ('hu_HU', 'dz'), ('hu_HU', 'dzs'), ('hu_HU', 'gy'), ('hu_HU', 'ly'), ('hu_HU', 'ny'), ('hu_HU', 'sz'), ('hu_HU', 'ty'), ('hu_HU', 'zs');
