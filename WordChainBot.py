@@ -25,7 +25,6 @@ class WordChainBot(commands.Bot):
     async def setup_hook(self):
         self.languages = await self.get_languages()
         self.logger.debug("Got available languages")
-        self.__developer_id = int(os.environ["DEVELOPER_ID"])
         self.__test_server_id = int(os.environ["TEST_SERVER_ID"])
         await self.add_cog(PrivateCogs(self))
         await self.add_cog(WordChainCog(self))
@@ -63,7 +62,7 @@ class WordChainBot(commands.Bot):
         else:
             if message.author == self.user:
                 return
-            elif self.user.mentioned_in(message) and message.author.id == self.__developer_id:
+            elif self.user.mentioned_in(message) and (await self.is_owner(message.author)):
                 self.logger.debug("Copying commands to test server started")
                 self.tree.copy_global_to(guild=discord.Object(self.__test_server_id))
                 self.logger.debug("Copying commands to test server finished")

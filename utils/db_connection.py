@@ -13,11 +13,14 @@ class DatabaseConnection:
     async def connect(self):
         host = os.getenv('MYSQL_HOST')
         if host is None:
-            host = 'localhost'
+            host = '127.0.0.1'
+            port = 3307
+        else:
+            port = 3306
         try:
             self.__connection = await connect(host=host, user=os.environ['MYSQL_USER'],
                                               password=os.environ.get('MYSQL_PASSWORD'),
-                                              database=os.environ['MYSQL_DB'])
+                                              database=os.environ['MYSQL_DB'], port=port)
             print(f"Connection id: {self.__connection.connection_id}")
             self.logger.info(
                 f"Connected to {await self.__connection.get_database()} with {self.__connection.connection_id}")
@@ -73,7 +76,8 @@ class DatabaseConnection:
         return await cursor.fetchall()
 
     async def get_props(self, guilds_id: int, channel_id: int, *props):
-        self.logger.info("Getting props {}".format(*props))
+        prop_string = ', '.join(["{}"] * len(props))
+        self.logger.info("Getting props {}".format(prop_string).format(*props))
         cursor = await self.__connection.cursor()
         await cursor.execute(
             f"SELECT COLUMN_NAME FROM information_schema.columns WHERE table_schema='{os.environ['MYSQL_DB']}' AND table_name='{os.environ['PROPS_TABLE_NAME']}'")
@@ -82,7 +86,6 @@ class DatabaseConnection:
             if not any([column[0] == prop for column in result]):
                 self.logger.debug(f"{prop} is not found in the columns")
                 return
-        prop_string = ', '.join(["{}"] * len(props))
         sql = "SELECT {} FROM {} WHERE guilds_id={} AND guild_channel_id={}".format(prop_string,
                                                                                     os.environ['PROPS_TABLE_NAME'],
                                                                                     guilds_id, channel_id).format(
@@ -112,7 +115,7 @@ class DatabaseConnection:
         if pass_reaction is not None:
             await cursor.execute(
                 f"UPDATE {os.environ['PROPS_TABLE_NAME']} SET pass_reaction='{pass_reaction}' WHERE guilds_id = {guild_id} AND guild_channel_id = {channel_id}")
-        elif wrong_reaction is not None:
+        if wrong_reaction is not None:
             await cursor.execute(
                 f"UPDATE {os.environ['PROPS_TABLE_NAME']} SET wrong_reaction='{wrong_reaction}' WHERE guilds_id = {guild_id} AND guild_channel_id = {channel_id}")
         await self.__connection.commit()
@@ -139,7 +142,7 @@ class DatabaseConnection:
         if pass_reaction:
             await cursor.execute(
                 f"UPDATE {os.environ['PROPS_TABLE_NAME']} SET pass_reaction=NULL WHERE guilds_id={guilds_id} AND guild_channel_id={channel_id}")
-        elif wrong_reaction:
+        if wrong_reaction:
             await cursor.execute(
                 f"UPDATE {os.environ['PROPS_TABLE_NAME']} SET wrong_reaction=NULL WHERE guilds_id={guilds_id} AND guild_channel_id={channel_id}")
         await self.__connection.commit()

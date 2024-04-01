@@ -38,8 +38,8 @@ class WordChainCog(commands.Cog, name="WordChain"):
                                                         ephemeral=True)
                 return
             else:
-                await self.bot.add_channel(interaction.guild_id, interaction.channel_id, language)
-                await self.bot.add_reaction(interaction.guild_id, channel, pass_reaction, wrong_reaction)
+                await self.bot.add_channel(interaction.guild_id, channel_id, language)
+                await self.bot.add_reaction(interaction.guild_id, channel_id, pass_reaction, wrong_reaction)
                 await interaction.response.send_message("A game of word chain is now live in this text channel.")
 
     @app_commands.command(name="end-game", description="End the word chain game in this text channel.")
@@ -51,10 +51,10 @@ class WordChainCog(commands.Cog, name="WordChain"):
             await interaction.response.send_message("No game is running in this channel.")
         else:
             if channel is not None:
-                channel = channel.id
+                channel_id = channel.id
             else:
-                channel = interaction.channel_id
-            await self.bot.remove_channel(interaction.guild_id, channel)
+                channel_id = interaction.channel_id
+            await self.bot.remove_channel(interaction.guild_id, channel_id)
             await interaction.response.send_message("Game ended.")
 
     @app_commands.command(name="change-reaction", description="Changes one or both reaction emote to a custom one.")
@@ -79,9 +79,9 @@ class WordChainCog(commands.Cog, name="WordChain"):
             return
         else:
             if channel is None:
-                channel = interaction.channel_id
+                channel_id = interaction.channel_id
             else:
-                channel = channel.id
+                channel_id = channel.id
 
             pass_reaction, wrong_reaction = await self.__check_reaction_strings(pass_reaction, wrong_reaction)
             if (pass_reaction is not None and len(pass_reaction) == 0) or (
@@ -89,7 +89,7 @@ class WordChainCog(commands.Cog, name="WordChain"):
                 await interaction.response.send_message("Couldn't find one of the passed reactions in your guild.",
                                                         ephemeral=True)
             else:
-                await self.bot.add_reaction(guild_id, channel, pass_reaction, wrong_reaction)
+                await self.bot.add_reaction(guild_id, channel_id, pass_reaction, wrong_reaction)
                 await interaction.response.send_message("Successfully added reactions to your guild.", ephemeral=True)
 
     @app_commands.command(name="remove-custom-reactions", description="Remove the custom added reactions if needed.")
@@ -111,11 +111,11 @@ class WordChainCog(commands.Cog, name="WordChain"):
             return
         else:
             if channel is None:
-                channel = interaction.channel_id
+                channel_id = interaction.channel_id
             else:
-                channel = channel.id
+                channel_id = channel.id
 
-        await self.bot.remove_reactions(guild_id, channel, pass_reaction, wrong_reaction)
+        await self.bot.remove_reactions(guild_id, channel_id, pass_reaction, wrong_reaction)
 
     async def __check_reaction_strings(self, pass_reaction: Optional[str] = None,
                                        wrong_reaction: Optional[str] = None):
@@ -131,5 +131,6 @@ class WordChainCog(commands.Cog, name="WordChain"):
                     return str(emoji.id)
                 else:
                     return ""
+            return reaction
         else:
             return None
