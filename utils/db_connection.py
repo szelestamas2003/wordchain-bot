@@ -124,7 +124,7 @@ class DatabaseConnection:
 
     async def remove_guild(self, guilds_id: int):
         cursor = await self.__connection.cursor()
-        await cursor.execute(f"DELETE FROM {os.environ['GUILDS_TABLE_NAME']} WHERE guilds_id={guilds_id}")
+        await cursor.execute(f"DELETE FROM {os.environ['GUILDS_TABLE_NAME']} WHERE guild_id={guilds_id}")
         await self.__connection.commit()
         self.logger.info(f"{guilds_id} is removed from the database")
         print("Guild removed from the database")

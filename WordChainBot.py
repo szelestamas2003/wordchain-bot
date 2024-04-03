@@ -14,13 +14,12 @@ from cogs.wordchain import WordChainCog
 
 class WordChainBot(commands.Bot):
     def __init__(self):
-        intents = discord.Intents.default()
-        intents.message_content = True
+        intents = discord.Intents.all()
         self.__database = DatabaseConnection()
         self.languages = []
         self.command_prefix = '!'
         self.logger = logging.getLogger('discord')
-        super().__init__(command_prefix=self.command_prefix, intents=intents)
+        super().__init__(command_prefix=self.command_prefix, intents=intents, activity=discord.Game("Word Chain", start=datetime.datetime.now(datetime.UTC)))
 
     async def setup_hook(self):
         self.languages = await self.get_languages()
@@ -28,9 +27,7 @@ class WordChainBot(commands.Bot):
         self.__test_server_id = int(os.environ["TEST_SERVER_ID"])
         await self.add_cog(PrivateCogs(self))
         await self.add_cog(WordChainCog(self))
-        self.logger.debug("Added cogs. Started sync")
-        await self.tree.sync()
-        self.logger.debug("Syncing finished")
+        self.logger.debug("Added cogs.")
 
     async def on_connect(self):
         await self.connect_to_db()
@@ -52,7 +49,6 @@ class WordChainBot(commands.Bot):
             if not await self.get_guild_by_id(guild.id):
                 await self.add_guild(guild.id)
             print(guild)
-        await self.change_presence(activity=discord.Game("Word Chain", start=datetime.datetime.utcnow()))
         self.logger.info(f"Logged in as {self.user}")
         print("WordChain bot is ready to be used!")
 
@@ -63,11 +59,9 @@ class WordChainBot(commands.Bot):
             if message.author == self.user:
                 return
             elif self.user.mentioned_in(message) and (await self.is_owner(message.author)):
-                self.logger.debug("Copying commands to test server started")
-                self.tree.copy_global_to(guild=discord.Object(self.__test_server_id))
-                self.logger.debug("Copying commands to test server finished")
                 self.logger.debug("Syncing the commands started")
                 await self.tree.sync()
+                await self.tree.sync(guild=discord.Object(self.__test_server_id))
                 self.logger.debug("Synced all commands")
                 print("Synced all commands.")
                 return

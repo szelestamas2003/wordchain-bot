@@ -18,18 +18,19 @@ class WordChainCog(commands.Cog, name="WordChain"):
                            pass_reaction="The emote to use if a word is passed.",
                            wrong_reaction="The emote to use if a word is passed.")
     @app_commands.rename(pass_reaction='pass-emote', wrong_reaction='wrong-emote')
+    @app_commands.default_permissions(manage_channels=True)
     @app_commands.checks.has_permissions(manage_channels=True)
     async def create_game(self, interaction: discord.Interaction,
                           language: app_commands.Transform[str, LanguageTransformer],
                           channel: Optional[discord.TextChannel] = None, pass_reaction: Optional[str] = None,
                           wrong_reaction: Optional[str] = None):
         if channel is None:
-            channel_id = interaction.channel.id
+            channel = interaction.channel
         else:
-            channel_id = channel.id
+            channel = channel
 
-        if channel_id in (await self.bot.get_channels(interaction.guild_id)):
-            await interaction.response.send_message("A game is already running in this channel.", ephemeral=True)
+        if channel.id in (await self.bot.get_channels(interaction.guild_id)):
+            await interaction.response.send_message(f"A game is already running in {channel.mention}", ephemeral=True)
         else:
             pass_reaction, wrong_reaction = await self.__check_reaction_strings(pass_reaction, wrong_reaction)
             if (pass_reaction is not None and len(pass_reaction) == 0) or (
@@ -38,11 +39,12 @@ class WordChainCog(commands.Cog, name="WordChain"):
                                                         ephemeral=True)
                 return
             else:
-                await self.bot.add_channel(interaction.guild_id, channel_id, language)
-                await self.bot.add_reaction(interaction.guild_id, channel_id, pass_reaction, wrong_reaction)
-                await interaction.response.send_message("A game of word chain is now live in this text channel.")
+                await self.bot.add_channel(interaction.guild_id, channel.id, language)
+                await self.bot.add_reaction(interaction.guild_id, channel.id, pass_reaction, wrong_reaction)
+                await interaction.response.send_message(f"A game of word chain is now live in {channel.mention}")
 
     @app_commands.command(name="end-game", description="End the word chain game in this text channel.")
+    @app_commands.default_permissions(manage_channels=True)
     @app_commands.checks.has_permissions(manage_channels=True)
     async def end_game(self, interaction: discord.Interaction, channel: Optional[discord.TextChannel] = None):
         if channel is not None and channel not in (await self.bot.get_channels(interaction.guild_id)):
@@ -62,6 +64,7 @@ class WordChainCog(commands.Cog, name="WordChain"):
                            pass_reaction="The emote to use if a word is passed.",
                            wrong_reaction="The emote to use if a word is passed.")
     @app_commands.rename(pass_reaction="pass-emote", wrong_reaction="wrong-emote")
+    @app_commands.default_permissions(manage_channels=True)
     @app_commands.checks.has_permissions(manage_channels=True)
     async def change_reaction(self, interaction: discord.Interaction, channel: Optional[discord.TextChannel] = None,
                               pass_reaction: Optional[str] = None, wrong_reaction: Optional[str] = None):
@@ -97,6 +100,7 @@ class WordChainCog(commands.Cog, name="WordChain"):
                            pass_reaction="If you would like to remove the custom pass reaction emote.",
                            wrong_reaction="If you would like to remove the custom wrong reaction emote.")
     @app_commands.rename(pass_reaction="delete-pass-emote", wrong_reaction="delete-wrong-emote")
+    @app_commands.default_permissions(manage_channels=True)
     @app_commands.checks.has_permissions(manage_channels=True)
     async def remove_reactions(self, interaction: discord.Interaction, channel: Optional[discord.TextChannel] = None,
                                pass_reaction: bool = False, wrong_reaction: bool = False):
