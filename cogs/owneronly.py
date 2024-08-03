@@ -3,11 +3,13 @@ from discord import app_commands
 import discord
 import logging
 import os
+
+from cogs.general import GeneralCog
 from cogs.wordchain import WordChainCog
 from utils.decorators import is_owner
 
 
-class PrivateCogs(commands.Cog, name="PrivateFuncs"):
+class OwnerOnlyCog(commands.Cog, name="OwnerOnly"):
     def __init__(self, bot: commands.Bot):
         super().__init__()
         self.bot = bot
@@ -29,10 +31,12 @@ class PrivateCogs(commands.Cog, name="PrivateFuncs"):
     @is_owner()
     async def reload_cogs(self, interaction: discord.Interaction):
         self.logger.info("Reloading cogs")
-        await self.bot.remove_cog("PrivateFuncs")
-        await self.bot.add_cog(PrivateCogs(self.bot))
+        await self.bot.remove_cog("OwnerOnly")
+        await self.bot.add_cog(OwnerOnlyCog(self.bot))
         await self.bot.remove_cog("WordChain")
         await self.bot.add_cog(WordChainCog(self.bot))
+        await self.bot.remove_cog("General")
+        await self.bot.add_cog(GeneralCog(self.bot))
         await interaction.response.send_message("Reloaded cogs", ephemeral=True)
         print("Cogs reloaded")
         self.logger.info("Cogs reloaded")

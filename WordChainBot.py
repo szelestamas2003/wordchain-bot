@@ -1,14 +1,17 @@
 from discord.ext import commands
 import discord
 from discord.ext import tasks
+from discord.app_commands import AppInstallationType, AppCommandContext
 import datetime
 import os
 import logging
 from typing import Optional
 from emoji import is_emoji
+
+from cogs.general import GeneralCog
 from utils.db_connection import DatabaseConnection
 from utils.check_spelling import check_spelling
-from cogs.owneronly import PrivateCogs
+from cogs.owneronly import OwnerOnlyCog
 from cogs.wordchain import WordChainCog
 
 
@@ -19,14 +22,15 @@ class WordChainBot(commands.Bot):
         self.languages = []
         self.command_prefix = '!'
         self.logger = logging.getLogger('discord')
-        super().__init__(command_prefix=self.command_prefix, intents=intents, activity=discord.Game("Word Chain", start=datetime.datetime.now(datetime.UTC)))
+        super().__init__(command_prefix=self.command_prefix, allowed_contexts=AppCommandContext(guild=True), allowed_installs=AppInstallationType(guild=True), intents=intents, activity=discord.Game("Word Chain", start=datetime.datetime.now(datetime.UTC)))
 
     async def setup_hook(self):
         self.languages = await self.get_languages()
         self.logger.debug("Got available languages")
         self.__test_server_id = int(os.environ["TEST_SERVER_ID"])
-        await self.add_cog(PrivateCogs(self))
+        await self.add_cog(OwnerOnlyCog(self))
         await self.add_cog(WordChainCog(self))
+        await self.add_cog(GeneralCog(self))
         self.logger.debug("Added cogs.")
 
     async def on_connect(self):
@@ -44,7 +48,7 @@ class WordChainBot(commands.Bot):
         self.logger.info("\n------------------------------------------------------\n")
 
     async def on_ready(self):
-        print(f"The bot is on {len(self.guilds)} discord server")
+        print(f"The bot is on {len(self.guilds)} discord server:")
         for guild in self.guilds:
             if not await self.get_guild_by_id(guild.id):
                 await self.add_guild(guild.id)
@@ -65,7 +69,7 @@ class WordChainBot(commands.Bot):
                 self.logger.debug("Synced all commands")
                 print("Synced all commands.")
                 return
-            elif message.channel.id not in (await self.get_channels(message.guild.id)):
+            elif message.guild is not None and message.channel.id not in (await self.get_channels(message.guild.id)):
                 return
             elif len(message.mentions) > 0 or len(message.role_mentions) > 0 or message.mention_everyone:
                 return
