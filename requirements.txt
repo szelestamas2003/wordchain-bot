@@ -1,5 +1,5 @@
 # To ensure app dependencies are ported from your virtual environment/host machine into your container, run 'pip freeze > requirements.txt' in the terminal to overwrite this file
 python-dotenv~=1.0.1
 discord.py~=2.4.0
-mysql-connector-python~=8.3.0
-emoji~=2.11.0
+mysql-connector-python>=9.1.0
+emoji>=2.11.0

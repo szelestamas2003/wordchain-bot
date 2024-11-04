@@ -1,18 +1,16 @@
-create user user_name
-    identified by 'user_password';
+create user bot_user
+    identified by 'wordchainbot_testaccount1!';
 
-grant delete, insert, select, update on wordchainbot.* to user_name;
+grant delete, insert, select, update on wordchainbot.* to bot_user;
 USE wordchainbot;
 create table guilds
 (
-    guild_id bigint unsigned not null
-        primary key
+    guild_id bigint unsigned primary key
 );
 
 create table languages
 (
-    lang   varchar(10)  not null
-        primary key,
+    lang   varchar(10)  primary key,
     lang_L varchar(100) not null
 );
 
@@ -42,7 +40,7 @@ create table guild_words
     guild_id         bigint unsigned not null,
     guild_channel_id bigint unsigned null,
     word             varchar(1000)   null,
-    foreign key (guild_id) references guilds_prop (guilds_id)
+    foreign key (guild_id) references guilds (guild_id)
         on update cascade on delete cascade
 );
 
